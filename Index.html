@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FitCampus SA — Homeworkouts for Students</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <style>
+    :root {
+      --primary: #e74c3c; --green: #27ae60; --blue: #3498db;
+      --light: #f8f9fa; --dark: #2c3e50; --gray: #7f8c8d;
+      --card: #fff; --border: #ecf0f1;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #fff9f9; color: var(--dark); line-height: 1.6; padding: 16px; }
+    .container { max-width: 700px; margin: 0 auto; }
+    header { text-align: center; padding: 20px 0 10px; }
+    .logo { font-size: 2.2rem; font-weight: 800; color: var(--primary); }
+    .quota { background: #fef2f2; border: 1px dashed #fecaca; padding: 12px; border-radius: 12px; margin: 16px 0; font-weight: 600; color: #dc2626; }
+    .card { background: var(--card); border-radius: 16px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+    h2 { font-size: 1.6rem; margin-bottom: 16px; color: var(--primary); }
+    .workout { background: #fdf2f2; border-radius: 12px; padding: 18px; margin: 16px 0; border-left: 4px solid var(--primary); position: relative; }
+    .workout.locked::before { content: "🔒"; position: absolute; top: 12px; right: 16px; font-size: 1.5rem; color: #b0b0b0; }
+    .workout-meta { display: flex; gap: 12px; font-size: 0.9rem; color: var(--gray); margin: 6px 0; }
+    .btn { display: block; width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; margin: 8px 0; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: #c0392b; }
+    .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+    .btn-green { background: var(--green); color: white; }
+    .btn-blue { background: var(--blue); color: white; }
+    .hidden { display: none; }
+    .bank-option { padding: 14px; border: 1px solid var(--border); border-radius: 10px; margin: 8px 0; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+    .bank-option.active { border-color: var(--primary); background: rgba(231, 76, 60, 0.05); }
+    .bank-logo { width: 40px; height: 40px; border-radius: 50%; background: var(--light); display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    .payment-instr { background: #f0f9ff; border-left: 4px solid var(--blue); padding: 16px; border-radius: 8px; margin: 20px 0; font-family: monospace; font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">FitCampus SA</div>
+      <div class="quota" id="quota">🔥 1 / 1 workouts used today</div>
+    </header>
+
+    <!-- ONBOARDING -->
+    <div id="onboarding" class="card">
+      <h2>📲 Start in 60 Seconds</h2>
+      <input type="tel" id="phone" placeholder="SA Mobile (e.g. 071 234 5678)" />
+      <input type="text" id="otp" placeholder="Code (try: 123456)" maxlength="6" />
+      <select id="university">
+        <option value="">University</option>
+        <option value="wits">Wits</option>
+        <option value="uct">UCT</option>
+        <option value="up">UP</option>
+        <option value="ukzn">UKZN</option>
+        <option value="other">Other</option>
+      </select>
+      <input type="text" id="student-id" placeholder="Student Number" />
+      <button class="btn btn-primary" onclick="signUp()">→ Get My First Workout</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="hidden">
+      <div class="card">
+        <h2>💪 Your Workouts</h2>
+        
+        <div class="workout">
+          <strong>🌅 Morning Energiser (7 min)</strong>
+          <div class="workout-meta">
+            <span><i class="fas fa-check-circle" style="color:#27ae60;"></i> Done</span>
+            <span><i class="fas fa-home"></i> Home</span>
+            <span><i class="fas fa-headphones"></i> Audio</span>
+          </div>
+          <button class="btn btn-outline" disabled>
+            <i class="fas fa-redo"></i> Repeat
+          </button>
+        </div>
+
+        <div class="workout locked">
+          <strong>📚 Study Break Burn (10 min)</strong>
+          <div class="workout-meta">
+            <span><i class="fas fa-chair"></i> Chair workout</span>
+            <span><i class="fas fa-video"></i> Video</span>
+          </div>
+          <button class="btn btn-outline" onclick="showUpgrade()">
+            <i class="fas fa-lock"></i> Upgrade for unlimited
+          </button>
+        </div>
+
+        <!-- 3 more workouts (same structure) -->
+
+        <button class="btn btn-primary" onclick="showUpgrade()" style="margin-top:20px;">
+          🚀 Upgrade — From R30/month
+        </button>
+      </div>
+    </div>
+
+    <!-- UPGRADE -->
+    <div id="upgrade" class="hidden">
+      <div class="card">
+        <h2>🎯 Choose Your Plan</h2>
+        <div style="display:grid; gap:12px; margin:20px 0;">
+          <button class="btn btn-outline" onclick="selectPlan('Starter')">
+            🌱 Starter — R30/month<br><small>4 workouts/week</small>
+          </button>
+          <button class="btn btn-primary" onclick="selectPlan('Plus')">
+            🔥 Plus — R50/month<br><small><strong>Most Popular!</strong> Unlimited + timetable sync</small>
+          </button>
+          <button class="btn btn-outline" onclick="selectPlan('Pro')">
+            🚀 Pro — R79/month<br><small>+ Wellness credits → R5 vouchers</small>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BANK -->
+    <div id="bank" class="hidden">
+      <div class="card">
+        <h2>🏦 Select Your Bank</h2>
+        <div class="bank-option" onclick="selectBank('capitec')">
+          <div class="bank-logo" style="background:#00A4E4; color:white;">C</div>
+          <div><strong>Capitec</strong><br><small>Use app reference — no card</small></div>
+        </div>
+        <div class="bank-option" onclick="selectBank('fnb')">
+          <div class="bank-logo" style="background:#0071CE; color:white;">F</div>
+          <div><strong>FNB</strong></div>
+        </div>
+        <!-- Others -->
+        
+        <input type="hidden" id="selected-bank">
+      </div>
+    </div>
+
+    <!-- CAPITEC -->
+    <div id="capitec" class="hidden">
+      <div class="card">
+        <h2>📱 Capitec Payment</h2>
+        <div class="payment-instr">
+          Beneficiary: <strong>FitCampus SA</strong><br>
+          Account: <strong>1234567890</strong><br>
+          Ref: <strong id="ref">FITCAMPUS-789456</strong>
+        </div>
+        <button class="btn btn-green" onclick="copyRef()"><i class="fas fa-copy"></i> Copy Reference</button>
+        <button class="btn btn-blue" onclick="confirmPayment()">✅ I’ve Paid</button>
+      </div>
+    </div>
+
+    <!-- CONFIRM -->
+    <div id="confirm" class="hidden">
+      <div class="card">
+        <h2>🎉 Almost Done!</h2>
+        <p>We’ll activate your plan in <strong>&lt;2 hours</strong>.</p>
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:16px; border-radius:10px; margin:20px 0;">
+          <strong>✅ Reference: <span id="final-ref">FITCAMPUS-789456</span></strong>
+        </div>
+        <button class="btn btn-primary" onclick="goToDashboard()">→ Back to Dashboard</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Mock user (replace with Firebase later)
+    let user = {
+      phone: '',
+      studentId: '',
+      university: '',
+      workoutsUsed: 1,
+      maxWorkouts: 1,
+      plan: null,
+      ref: 'FITCAMPUS-' + Math.floor(100000 + Math.random() * 900000)
+    };
+
+    // Firebase config (replace with your keys)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBd...", // ← YOUR KEY
+      authDomain: "fitcampus-sa.firebaseapp.com",
+      projectId: "fitcampus-sa",
+      storageBucket: "fitcampus-sa.appspot.com",
+      messagingSenderId: "1234567890",
+      appId: "1:1234567890:web:abcdef"
+    };
+    // firebase.initializeApp(firebaseConfig);
+    // const db = firebase.firestore();
+
+    // ONBOARDING
+    function signUp() {
+      const phone = document.getElementById('phone').value;
+      const otp = document.getElementById('otp').value;
+      const uni = document.getElementById('university').value;
+      const sid = document.getElementById('student-id').value;
+
+      if (otp !== '123456') return alert('❌ Invalid code. Try 123456.');
+      if (!sid) return alert('Enter student number.');
+
+      user.phone = phone;
+      user.studentId = sid;
+      user.university = uni;
+
+      // In real app: 
+      // db.collection('users').doc(sid).set(user);
+      // localStorage.setItem('studentId', sid);
+
+      document.getElementById('onboarding').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+    }
+
+    // UPGRADE FLOW
+    function showUpgrade() {
+      document.getElementById('dashboard').classList.add('hidden');
+      document.getElementById('upgrade').classList.remove('hidden');
+    }
+    function selectPlan(plan) {
+      user.plan = plan;
+      document.getElementById('upgrade').classList.add('hidden');
+      document.getElementById('bank').classList.remove('hidden');
+    }
+    function selectBank(bank) {
+      document.querySelectorAll('.bank-option').forEach(el => el.classList.remove('active'));
+      event.target.closest('.bank-option').classList.add('active');
+      if (bank === 'capitec') {
+        document.getElementById('bank').classList.add('hidden');
+        document.getElementById('capitec').classList.remove('hidden');
+        document.getElementById('ref').textContent = user.ref;
+      }
+    }
+    function copyRef() {
+      navigator.clipboard.writeText(user.ref);
+      alert('✅ Reference copied!');
+    }
+    function confirmPayment() {
+      // In real app:
+      // db.collection('payments').add({
+      //   studentId: user.studentId,
+      //   ref: user.ref,
+      //   plan: user.plan,
+      //   status: 'pending'
+      // });
+      
+      document.getElementById('capitec').classList.add('hidden');
+      document.getElementById('confirm').classList.remove('hidden');
+      document.getElementById('final-ref').textContent = user.ref;
+    }
+    function goToDashboard() {
+      // Mock activation
+      user.maxWorkouts = 999;
+      user.status = 'active';
+      document.getElementById('confirm').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      document.getElementById('quota').textContent = '✅ Unlimited workouts — go crush it!';
+      
+      // Unlock workouts
+      document.querySelectorAll('.workout.locked button').forEach(btn => {
+        btn.innerHTML = '<i class="fas fa-play"></i> Play';
+        btn.className = 'btn btn-primary';
+        btn.onclick = () => {
+          const audio = new Audio('https://github.com/fitcampus-sa/workouts/raw/main/01-morning.mp3');
+          audio.play();
+          alert('🎧 Playing “Morning Energiser”…\n\nDo this before your first lecture!');
+        };
+      });
+    }
+  </script>
+</body>
+</html>
