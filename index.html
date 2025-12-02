@@ -183,7 +183,24 @@
       appId: "1:1234567890:web:abcdef"
     };
     // firebase.initializeApp(firebaseConfig);
-    // const db = firebase.firestore();
+ // Save student data to Firestore
+function saveStudentData(studentId, phone, university) {
+  const userRef = db.collection('users').doc(studentId);
+  userRef.set({
+    phone: phone,
+    university: university,
+    workoutsUsed: 1,
+    maxWorkouts: 1,
+    status: 'free',
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true })
+  .then(() => {
+    console.log("✅ Student saved:", studentId);
+  })
+  .catch((error) => {
+    console.error("❌ Error saving student:", error);
+  });
+}
 
     // ONBOARDING
     function signUp() {
@@ -199,9 +216,20 @@
       user.studentId = sid;
       user.university = uni;
 
-      // In real app: 
-      // db.collection('users').doc(sid).set(user);
-      // localStorage.setItem('studentId', sid);
+      // Save to Firebase
+  db.collection('users').doc(sid).set({
+    phone: phone,
+    university: uni,
+    workoutsUsed: 1,
+    maxWorkouts: 1,
+    status: 'free',
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true })
+  .then(() => console.log("✅ Student saved:", sid))
+  .catch(err => console.error("❌ Save failed:", err));
+
+  // Save locally
+  localStorage.setItem('studentId', sid);
 
       document.getElementById('onboarding').classList.add('hidden');
       document.getElementById('dashboard').classList.remove('hidden');
@@ -265,3 +293,4 @@
   </script>
 </body>
 </html>
+
