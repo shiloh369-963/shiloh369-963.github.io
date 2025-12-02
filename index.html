@@ -90,8 +90,6 @@
           </button>
         </div>
 
-        <!-- 3 more workouts (same structure) -->
-
         <button class="btn btn-primary" onclick="showUpgrade()" style="margin-top:20px;">
           🚀 Upgrade — From R30/month
         </button>
@@ -128,8 +126,6 @@
           <div class="bank-logo" style="background:#0071CE; color:white;">F</div>
           <div><strong>FNB</strong></div>
         </div>
-        <!-- Others -->
-        
         <input type="hidden" id="selected-bank">
       </div>
     </div>
@@ -162,32 +158,31 @@
   </div>
 
   <script>
-  <script>
-  // Firebase config — REPLACE WITH YOUR REAL KEYS
-  const firebaseConfig = {
-    apiKey: "AIzaSy...", // ← PASTE YOURS HERE
-    authDomain: "fitcampus-sa.firebaseapp.com",
-    projectId: "fitcampus-sa",
-    storageBucket: "fitcampus-sa.appspot.com",
-    messagingSenderId: "1234567890",
-    appId: "1:1234567890:web:abcdef"
-  };
+ const firebaseConfig = {
+  apiKey: "AIzaSyBbGw1WftSrYrEOr4zSzCa08dP6jjPh4eU",
+  authDomain: "fitcampus-sa.firebaseapp.com",
+  projectId: "fitcampus-sa",
+  storageBucket: "fitcampus-sa.firebasestorage.app",
+  messagingSenderId: "817485589138",
+  appId: "1:817485589138:web:b1cf457a8bf0f948b5144b"
+};
 
-  // Initialize Firebase
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-  // Mock user
-  let user = {
-    phone: '',
-    studentId: '',
-    university: '',
-    workoutsUsed: 1,
-    maxWorkouts: 1,
-    plan: null,
-    ref: 'FITCAMPUS-' + Math.floor(100000 + Math.random() * 900000)
-  };
-</script>
+    // Mock user
+    let user = {
+      phone: '',
+      studentId: '',
+      university: '',
+      workoutsUsed: 1,
+      maxWorkouts: 1,
+      plan: null,
+      ref: 'FITCAMPUS-' + Math.floor(100000 + Math.random() * 900000)
+    };
+
+    // ONBOARDING
     function signUp() {
       const phone = document.getElementById('phone').value;
       const otp = document.getElementById('otp').value;
@@ -197,27 +192,22 @@
       if (otp !== '123456') return alert('❌ Invalid code. Try 123456.');
       if (!sid) return alert('Enter student number.');
 
-      user.phone = phone;
-      user.studentId = sid;
-      user.university = uni;
-
       // Save to Firebase
-  db.collection('users').doc(sid).set({
-    phone: phone,
-    university: uni,
-    workoutsUsed: 1,
-    maxWorkouts: 1,
-    status: 'free',
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true })
-  .then(() => console.log("✅ Student saved:", sid))
-  .catch(err => console.error("❌ Save failed:", err));
-
-  // Save locally
-  localStorage.setItem('studentId', sid);
-
-      document.getElementById('onboarding').classList.add('hidden');
-      document.getElementById('dashboard').classList.remove('hidden');
+      db.collection('users').doc(sid).set({
+        phone: phone,
+        university: uni,
+        workoutsUsed: 1,
+        maxWorkouts: 1,
+        status: 'free',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true })
+      .then(() => {
+        console.log("✅ Student saved:", sid);
+        localStorage.setItem('studentId', sid);
+        document.getElementById('onboarding').classList.add('hidden');
+        document.getElementById('dashboard').classList.remove('hidden');
+      })
+      .catch(err => console.error("❌ Save failed:", err));
     }
 
     // UPGRADE FLOW
@@ -244,27 +234,17 @@
       alert('✅ Reference copied!');
     }
     function confirmPayment() {
-      // In real app:
-      // db.collection('payments').add({
-      //   studentId: user.studentId,
-      //   ref: user.ref,
-      //   plan: user.plan,
-      //   status: 'pending'
-      // });
-      
       document.getElementById('capitec').classList.add('hidden');
       document.getElementById('confirm').classList.remove('hidden');
       document.getElementById('final-ref').textContent = user.ref;
     }
     function goToDashboard() {
-      // Mock activation
       user.maxWorkouts = 999;
       user.status = 'active';
       document.getElementById('confirm').classList.add('hidden');
       document.getElementById('dashboard').classList.remove('hidden');
       document.getElementById('quota').textContent = '✅ Unlimited workouts — go crush it!';
       
-      // Unlock workouts
       document.querySelectorAll('.workout.locked button').forEach(btn => {
         btn.innerHTML = '<i class="fas fa-play"></i> Play';
         btn.className = 'btn btn-primary';
@@ -278,5 +258,3 @@
   </script>
 </body>
 </html>
-
-
