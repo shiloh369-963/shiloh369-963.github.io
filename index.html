@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FitCampus SA — Homeworkouts for Students</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <style>
     :root {
       --primary: #e74c3c; --green: #27ae60; --blue: #3498db;
@@ -233,28 +233,67 @@
       navigator.clipboard.writeText(user.ref);
       alert('✅ Reference copied!');
     }
-    function confirmPayment() {
-      document.getElementById('capitec').classList.add('hidden');
-      document.getElementById('confirm').classList.remove('hidden');
-      document.getElementById('final-ref').textContent = user.ref;
-    }
-    function goToDashboard() {
-      user.maxWorkouts = 999;
-      user.status = 'active';
-      document.getElementById('confirm').classList.add('hidden');
-      document.getElementById('dashboard').classList.remove('hidden');
-      document.getElementById('quota').textContent = '✅ Unlimited workouts — go crush it!';
+  function confirmPayment() {
+  // Show Capitec QR payment screen
+  document.getElementById('capitec').classList.add('hidden');
+  
+  const paymentDiv = document.createElement('div');
+  paymentDiv.className = 'card';
+  paymentDiv.innerHTML = `
+    <h2>📱 Pay via Capitec App</h2>
+    
+    <div style="text-align:center; margin:20px 0;">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Capitec_Bank_logo.svg/1200px-Capitec_Bank_logo.svg.png" 
+           alt="Capitec" width="120" style="margin:10px;">
+    </div>
+
+    <div class="payment-instr">
+      <strong>1. Open Capitec app</strong><br>
+      <strong>2. Tap "Scan to Pay"</strong><br>
+      <strong>3. Scan QR below OR enter manually:</strong><br><br>
       
-      document.querySelectorAll('.workout.locked button').forEach(btn => {
-        btn.innerHTML = '<i class="fas fa-play"></i> Play';
-        btn.className = 'btn btn-primary';
-        btn.onclick = () => {
-          const audio = new Audio('https://github.com/fitcampus-sa/workouts/raw/main/01-morning.mp3');
-          audio.play();
-          alert('🎧 Playing “Morning Energiser”…\n\nDo this before your first lecture!');
-        };
-      });
-    }
+      Beneficiary: <strong>FitCampus SA</strong><br>
+      Account: <strong>1234567890</strong> ← YOUR ACCOUNT<br>
+      Amount: <strong>R50.00</strong><br>
+      Reference: <strong>${user.ref}</strong>
+    </div>
+
+    <div style="text-align:center; margin:20px 0;">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=Beneficiary:FitCampus%20SA%0AAccount:2349676079%0AAmount:R50%0AReference:${user.ref}" 
+           alt="QR Code" width="200">
+    </div>
+
+    <button class="btn btn-green" onclick="navigator.clipboard.writeText('${user.ref}'); alert('✅ Reference copied!')">
+      <i class="fas fa-copy"></i> Copy Reference
+    </button>
+    
+    <button class="btn btn-blue" onclick="markAsPaid()">
+      ✅ I’ve Paid — Activate My Plan
+    </button>
+  `;
+  document.querySelector('.container').appendChild(paymentDiv);
+}
+
+function markAsPaid() {
+  alert(`✅ Payment received!\n\nWe’ll activate your plan within 2 hours.\n\nYour reference: ${user.ref}`);
+  
+  // Unlock workouts after 1 second (mock)
+  setTimeout(() => {
+    user.maxWorkouts = 999;
+    document.getElementById('quota').textContent = '✅ Unlimited workouts — go crush it!';
+    
+    document.querySelectorAll('.workout.locked button').forEach(btn => {
+      btn.innerHTML = '<i class="fas fa-play"></i> Play';
+      btn.className = 'btn btn-primary';
+      btn.onclick = () => {
+        const audio = new Audio('https://github.com/fitcampus-sa/workouts/raw/main/01-morning.mp3');
+        audio.play();
+        alert('🎧 Playing “Morning Energiser”…\n\nDo this before your first lecture!');
+      };
+    });
+  }, 1000);
+}
   </script>
 </body>
 </html>
+
